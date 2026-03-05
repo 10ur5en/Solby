@@ -8,7 +8,7 @@ import { useCallback, useMemo, useEffect } from "react";
 import { shelbyClient } from "@/utils/shelbyClient";
 import type { WalletChain } from "@/context/ActiveWalletChainContext";
 
-/** Shelby useUploadBlobs / blob işlemleri için kullanılan signer (Solana veya Aptos). */
+/** Signer used for Shelby useUploadBlobs / blob operations (Solana or Aptos). */
 export type ShelbySigner = {
   account: unknown;
   signAndSubmitTransaction: (params: { data: unknown; options?: unknown }) => Promise<{ hash: string }>;
@@ -32,7 +32,7 @@ export function useUnifiedWallet(): {
   disconnect: () => void;
   /** Solana wallet ref for useStorageAccount when chain is solana */
   solanaWallet: unknown;
-  /** Shelby blob upload / profile için kullanılacak signer (Solana veya Aptos). */
+  /** Signer to use for Shelby blob upload / profile (Solana or Aptos). */
   shelbySigner: ShelbySigner | null;
   /** True when upload/profile sign is available (Solana or Aptos) */
   canSign: boolean;

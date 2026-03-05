@@ -1,83 +1,83 @@
 # Shelby Player
 
-Solana cüzdanı ile Shelby ağına video yükleyen, YouTube tarzı galeri ve paylaşım sayfalarına sahip web uygulaması. [Shelby Solana Starter](https://github.com/shelby/solana-starter) temel alınarak geliştirilmiştir.
+Web app that uploads videos to the Shelby network with a Solana wallet, featuring a YouTube-style gallery and share pages. Built on [Shelby Solana Starter](https://github.com/shelby/solana-starter).
 
-## Özellikler
+## Features
 
-- **Solana cüzdan bağlantısı** — Phantom, Solflare vb.
-- **Storage hesabı** — Cüzdandan türetilir, ShelbyUSD ve APT ile fonlanır
-- **Video yükleme** — MP4, WebM, OGG (Shelby blob olarak saklanır)
-- **YouTube benzeri galeri** — Yüklenen ve paylaşılan videolar grid görünümde
-- **Video izleme sayfası** — `/v/[account]/[dosya-adı]` ile doğrudan link
-- **Paylaşım** — Link kopyala ve tarayıcı Paylaş API’si
+- **Solana wallet connection** — Phantom, Solflare, etc.
+- **Storage account** — Derived from wallet, funded with ShelbyUSD and APT
+- **Video upload** — MP4, WebM, OGG (stored as Shelby blobs)
+- **YouTube-style gallery** — Uploaded and shared videos in grid view
+- **Video watch page** — Direct link via `/v/[account]/[file-name]`
+- **Sharing** — Copy link and browser Share API
 
-## Kurulum
+## Setup
 
 ```bash
-# Bağımlılıklar
+# Dependencies
 npm install
 
-# Ortam değişkenleri (Geomi'den ücretsiz API anahtarı: https://geomi.dev/)
+# Environment variables (free API key from Geomi: https://geomi.dev/)
 cp .env.example .env.local
-# .env.local içine NEXT_PUBLIC_SHELBYNET_API_KEY=... ekleyin
+# Add NEXT_PUBLIC_SHELBYNET_API_KEY=... to .env.local
 
-# Geliştirme sunucusu
+# Development server
 npm run dev
 ```
 
-Tarayıcıda [http://localhost:3000](http://localhost:3000) açın.
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-## Ortam değişkenleri
+## Environment variables
 
-| Değişken | Açıklama |
-|----------|----------|
-| `NEXT_PUBLIC_SHELBYNET_API_KEY` | Shelby API anahtarı (gerekli) |
-| `NEXT_PUBLIC_SOLANA_RPC` | Solana RPC (isteğe bağlı, varsayılan: Devnet) |
+| Variable | Description |
+|----------|-------------|
+| `NEXT_PUBLIC_SHELBYNET_API_KEY` | Shelby API key (required) |
+| `NEXT_PUBLIC_SOLANA_RPC` | Solana RPC (optional, default: Devnet) |
 
-### "Failed to fetch" / yükleme hatası
+### "Failed to fetch" / loading error
 
-Yükle butonuna basınca **Failed to fetch** alıyorsanız:
+If you get **Failed to fetch** when clicking the upload button:
 
-1. **API anahtarı** — [Geomi](https://geomi.dev/) üzerinden giriş yapın, **API Resource** oluşturup **Shelbynet** seçin. Anahtarı **client key** (tarayıcı) olarak oluşturun; server key tarayıcıdan çalışmaz.
-2. **Onaylı URL** — Aynı anahtarda **approved URLs** kısmına `http://localhost:3000` ekleyin. Bu olmazsa CORS nedeniyle istek bloklanır.
-3. **.env.local** — Proje kökünde `.env.local` dosyası oluşturup şunu yazın:
+1. **API key** — Sign in at [Geomi](https://geomi.dev/), create an **API Resource** and select **Shelbynet**. Create the key as **client key** (browser); server key will not work from the browser.
+2. **Approved URLs** — Add `http://localhost:3000` to **approved URLs** for that key. Otherwise the request will be blocked by CORS.
+3. **.env.local** — Create a `.env.local` file in the project root with:
    ```env
-   NEXT_PUBLIC_SHELBYNET_API_KEY=geomi_xxx_veya_aptoslabs_xxx
+   NEXT_PUBLIC_SHELBYNET_API_KEY=geomi_xxx_or_aptoslabs_xxx
    ```
-4. Sunucuyu **yeniden başlatın** (`npm run dev`); env değişkenleri sadece başlangıçta okunur.
+4. **Restart the server** (`npm run dev`); env variables are only read at startup.
 
-## Kullanım
+## Usage
 
-1. **Cüzdan bağla** — Sağ üstten Solana cüzdanınızı seçin.
-2. **Hesabı fonla** — “Hesabı fonla” ile storage hesabına ShelbyUSD ve APT alın.
-3. **Video yükle** — “Video seç” ile dosya seçip “Yükle” ile Shelby’e gönderin.
-4. **İzle ve paylaş** — Galerideki karta tıklayarak izleyin; “Linki kopyala” veya “Paylaş” ile linki paylaşın.
+1. **Connect wallet** — Select your Solana wallet from the top right.
+2. **Fund account** — Use "Fund account" to get ShelbyUSD and APT for the storage account.
+3. **Upload video** — Use "Choose video" to pick a file and "Upload" to send it to Shelby.
+4. **Watch and share** — Click a card in the gallery to watch; use "Copy link" or "Share" to share the link.
 
-Paylaşılan link (`/v/STORAGE_ACCOUNT/DOSYA_ADI`) herkese açıktır; videolar Shelby ağında tutulur.
+Shared links (`/v/STORAGE_ACCOUNT/FILE_NAME`) are public; videos are stored on the Shelby network.
 
-## Proje yapısı
+## Project structure
 
 ```
 src/
 ├── app/
-│   ├── page.tsx           # Ana sayfa (galeri + yükleme)
-│   ├── v/[account]/[name]/page.tsx  # Video izleme + paylaşım
+│   ├── page.tsx           # Home page (gallery + upload)
+│   ├── v/[account]/[name]/page.tsx  # Video watch + share
 │   ├── layout.tsx
 │   └── globals.css
 ├── components/
-│   ├── Header.tsx         # Cüzdan bağlantısı
+│   ├── Header.tsx         # Wallet connection
 │   ├── StorageAccountManager.tsx
 │   ├── VideoUploader.tsx
-│   ├── VideoCard.tsx      # Galeri kartı
+│   ├── VideoCard.tsx      # Gallery card
 │   └── ui/button.tsx
 ├── hooks/
 │   └── useFundAccount.ts
 ├── types/
-│   └── video.ts          # Video listesi (localStorage)
+│   └── video.ts          # Video list (localStorage)
 └── utils/
     └── shelbyClient.ts
 ```
 
-## Shelby hakkında
+## About Shelby
 
-[Shelby](https://shelby.xyz) zincirden bağımsız, merkeziyetsiz dosya depolama protokolüdür. Veriler HTTP `GET` ile okunur; Solana, Aptos veya EVM cüzdanı ile imza atılarak yükleme yapılır.
+[Shelby](https://shelby.xyz) is a chain-agnostic, decentralized file storage protocol. Data is read via HTTP `GET`; uploads are signed with a Solana, Aptos, or EVM wallet.

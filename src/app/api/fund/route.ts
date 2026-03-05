@@ -15,7 +15,7 @@ export async function POST(request: Request) {
 
     if (!address || typeof amount !== "number") {
       return NextResponse.json(
-        { error: "address ve amount gerekli" },
+        { error: "address and amount required" },
         { status: 400 }
       );
     }
@@ -51,7 +51,7 @@ export async function POST(request: Request) {
         );
       }
       return NextResponse.json(
-        { error: "Geçersiz faucet yanıtı" },
+        { error: "Invalid faucet response" },
         { status: 502 }
       );
     }

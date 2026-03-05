@@ -16,9 +16,9 @@ type ShelbyClientWithAptos = {
 };
 
 /**
- * Shelby USD faucet'i API anahtarı ile çağırır; SDK'daki eksik Authorization
- * ve hata gövdesi yüzünden oluşan "Failed to fund account" yerine sunucu
- * cevabını fırlatır.
+ * Calls Shelby USD faucet with API key; throws server response instead of
+ * generic "Failed to fund account" due to missing Authorization and error
+ * body handling in the SDK.
  */
 export async function fundWithShelbyUSD(
   shelbyClient: ShelbyClientWithAptos,
@@ -34,7 +34,7 @@ export async function fundWithShelbyUSD(
     normalizedAddress = s.startsWith("0x") ? s : `0x${s}`;
   }
 
-  // Tarayıcıdan doğrudan faucet CORS/429 verebiliyor; kendi API route üzerinden istek atıyoruz.
+  // Direct faucet from browser can return CORS/429; we call via our own API route.
   const fundUrl =
     typeof window !== "undefined" ? "/api/fund" : SHELBY_USD_FAUCET;
   const headers: Record<string, string> = {
@@ -60,7 +60,7 @@ export async function fundWithShelbyUSD(
     if (!response.ok) {
       throw new Error(`Faucet ${response.status}: ${response.statusText}`);
     }
-    throw new Error("Faucet geçersiz yanıt");
+    throw new Error("Faucet invalid response");
   }
 
   if (!response.ok) {
@@ -73,7 +73,7 @@ export async function fundWithShelbyUSD(
 
   const hash = responseJson.txn_hashes?.[0];
   if (!hash) {
-    throw new Error("Faucet yanıtında txn_hashes yok");
+    throw new Error("Faucet response missing txn_hashes");
   }
 
   await shelbyClient.aptos.waitForTransaction({

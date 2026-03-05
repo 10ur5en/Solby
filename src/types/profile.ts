@@ -1,7 +1,7 @@
 export interface ProfileData {
   channelName: string;
   avatarBlobName?: string;
-  /** X (Twitter) kullanıcı adı, @ olmadan (örn: "elonmusk") */
+  /** X (Twitter) username without @ (e.g. "elonmusk") */
   xHandle?: string;
 }
 

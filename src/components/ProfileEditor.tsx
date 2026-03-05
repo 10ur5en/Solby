@@ -80,19 +80,19 @@ export const ProfileEditor = memo(function ProfileEditor({
   const handleSave = useCallback(async () => {
     if (!shelbySigner) {
       toast.error(
-        "Cüzdan imzalama hazır değil. Cüzdanı bağlayıp tekrar deneyin."
+        "Wallet signing not ready. Connect your wallet and try again."
       );
       return;
     }
     if (!channelName.trim()) {
-      toast.error("Kanal adı boş olamaz.");
+      toast.error("Channel name cannot be empty.");
       return;
     }
 
     try {
       const blobs: { blobName: string; blobData: Uint8Array }[] = [];
 
-      // Her yeni avatar yüklemesinde benzersiz isim üret
+      // Generate unique name for each new avatar upload
       const timestamp = Date.now();
       const nextAvatarBlobName =
         avatarFile != null
@@ -231,14 +231,14 @@ export const ProfileEditor = memo(function ProfileEditor({
               htmlFor="channel-name"
               className="mb-1 block text-sm font-medium text-white/80"
             >
-              Kanal adı
+              Channel name
             </label>
             <input
               id="channel-name"
               type="text"
               value={channelName}
               onChange={(e) => setChannelName(e.target.value)}
-              placeholder="Kanal adınız"
+              placeholder="Your channel name"
               className="w-full rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/40 focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
             />
           </div>
@@ -247,14 +247,14 @@ export const ProfileEditor = memo(function ProfileEditor({
               htmlFor="x-handle"
               className="mb-1 block text-sm font-medium text-white/80"
             >
-              X hesabı (isteğe bağlı)
+              X account (optional)
             </label>
             <input
               id="x-handle"
               type="text"
               value={xHandle}
               onChange={(e) => setXHandle(e.target.value)}
-              placeholder="@kullaniciadi veya kullaniciadi"
+              placeholder="@username or username"
               className="w-full rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/40 focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
             />
           </div>

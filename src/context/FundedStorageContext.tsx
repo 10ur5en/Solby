@@ -11,7 +11,7 @@ import {
 
 const STORAGE_KEY = "shelby-player-funded-accounts";
 
-/** Aynı hesabı 0x/hex farklı yazımlarında eşleştirmek için tek biçim. */
+/** Normalize address for matching same account across 0x/hex variants. */
 export function normalizeStorageAddress(addr: string | null): string {
   if (!addr || typeof addr !== "string") return "";
   const s = addr.trim().toLowerCase();

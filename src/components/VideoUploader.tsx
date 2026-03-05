@@ -24,7 +24,7 @@ const CATEGORY_LABELS: Record<VideoCategory, string> = {
   other: "Other",
 };
 
-/** Video adından güvenli blob dosya adı üretir (uzantı korunur). */
+/** Produces a safe blob file name from video title (extension preserved). */
 function sanitizeBlobName(displayName: string, originalFileName: string): string {
   const ext = originalFileName.includes(".")
     ? originalFileName.slice(originalFileName.lastIndexOf("."))
@@ -98,7 +98,7 @@ export const VideoUploader = memo(function VideoUploader({
       const arrayBuffer = await selectedFile.arrayBuffer();
       const blobData = new Uint8Array(arrayBuffer);
       const expirationMicros =
-        (Date.now() + 1000 * 60 * 60 * 24 * 30) * 1000; // 30 gün
+        (Date.now() + 1000 * 60 * 60 * 24 * 30) * 1000; // 30 days
 
       await uploadBlobs({
         signer: shelbySigner as Parameters<typeof uploadBlobs>[0]["signer"],

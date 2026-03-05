@@ -7,7 +7,7 @@ const SHELBYNET_BASES = [
   "https://api.shelbynet.aptoslabs.com/v1",
 ] as const;
 
-/** Shelbynet Indexer GraphQL (Explorer bakiyeyi buradan alıyor). */
+/** Shelbynet Indexer GraphQL (Explorer gets balance from here). */
 const SHELBYNET_GRAPHQL = "https://api.shelbynet.shelby.xyz/v1/graphql";
 
 const GET_FUNGIBLE_BALANCES = `
@@ -19,7 +19,7 @@ const GET_FUNGIBLE_BALANCES = `
   }
 `;
 
-/** Aptos adresi: trim, küçük harf, 0x öneki (uzunluk değiştirilmez). */
+/** Aptos address: trim, lowercase, 0x prefix (length unchanged). */
 function normalizeAptosAddress(addr: string): string {
   const s = addr.trim().toLowerCase();
   return s.startsWith("0x") ? s : `0x${s}`;
@@ -111,7 +111,7 @@ function parseAmount(v: string | number): bigint {
   }
 }
 
-/** Shelbynet Indexer GraphQL ile APT ve ShelbyUSD ayrı ayrı döner. */
+/** Shelbynet Indexer GraphQL returns APT and ShelbyUSD separately. */
 async function getBalanceFromIndexer(addr: string): Promise<{
   balance: string;
   apt: string;
@@ -197,7 +197,7 @@ export async function GET(request: Request) {
   const addr = normalizeAptosAddress(address.trim());
 
   try {
-    // Önce Indexer'dan al (APT + ShelbyUSD ayrı)
+    // First try Indexer (APT + ShelbyUSD separate)
     const indexerResult = await getBalanceFromIndexer(addr);
     if (indexerResult && BigInt(indexerResult.balance) > 0n) {
       return NextResponse.json({

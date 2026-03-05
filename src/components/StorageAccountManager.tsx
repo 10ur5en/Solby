@@ -41,16 +41,16 @@ export const StorageAccountManager = memo(function StorageAccountManager({
   const handleFundAccount = useCallback(async () => {
     if (!storageAddressStr) return;
     try {
-      setStatusMessage("ShelbyUSD ve APT yükleniyor...");
+      setStatusMessage("Loading ShelbyUSD and APT...");
       await fundAccount(storageAddressStr);
       setIsFunded(true);
       setStatusMessage(null);
-      toast.success("Hesap fonlandı!");
+      toast.success("Account funded!");
       onAccountFunded?.();
     } catch (error) {
       setStatusMessage(null);
       toast.error(
-        error instanceof Error ? error.message : "Fonlama başarısız"
+        error instanceof Error ? error.message : "Funding failed"
       );
     }
   }, [storageAddressStr, fundAccount, onAccountFunded]);
@@ -59,10 +59,10 @@ export const StorageAccountManager = memo(function StorageAccountManager({
     return (
       <div className="rounded-2xl border border-white/20 bg-white/5 p-6 glass">
         <h3 className="mb-2 text-lg font-semibold text-white">
-          Storage hesabı
+          Storage account
         </h3>
         <p className="text-sm text-white/70">
-          Storage hesabını görmek için Solana cüzdanınızı bağlayın.
+          Connect your Solana wallet to see the storage account.
         </p>
       </div>
     );
@@ -71,20 +71,20 @@ export const StorageAccountManager = memo(function StorageAccountManager({
   return (
     <div className="rounded-2xl border border-white/20 bg-white/5 p-6 glass">
       <h3 className="mb-2 text-lg font-semibold text-white">
-        Storage hesabı
+        Storage account
       </h3>
       <p className="mb-4 text-sm text-white/70">
-        Cüzdanınızdan türetilen Shelby hesabı. Video yüklemek için fonlayın.
+        Shelby account derived from your wallet. Fund it to upload videos.
       </p>
       {storageAddressStr && (
         <div className="mb-4">
-          <p className="text-xs text-white/60">Hesap adresi</p>
+          <p className="text-xs text-white/60">Account address</p>
           <p className="break-all font-mono text-sm text-white">
             {storageAddressStr}
           </p>
           {isFunded && (
             <span className="mt-2 inline-block rounded-full bg-green-500/20 px-2 py-0.5 text-xs text-green-400">
-              Fonlandı
+              Funded
             </span>
           )}
         </div>
@@ -98,7 +98,7 @@ export const StorageAccountManager = memo(function StorageAccountManager({
         variant="outline"
         className="border-[var(--poline-accent-5)] bg-white/5 text-white hover:bg-[var(--poline-accent-5)] hover:text-[var(--poline-surface-1)]"
       >
-        {isFunding ? "Fonlanıyor..." : isFunded ? "Fonlandı" : "Hesabı fonla"}
+        {isFunding ? "Funding..." : isFunded ? "Funded" : "Fund account"}
       </Button>
     </div>
   );
