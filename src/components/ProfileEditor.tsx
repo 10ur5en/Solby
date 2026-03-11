@@ -16,13 +16,13 @@ import {
   ShelbyBlobClient,
 } from "@shelby-protocol/sdk/browser";
 import {
+  AccountAddress,
   Aptos,
   AptosConfig,
   Network as AptosNetwork,
   type InputEntryFunctionData,
-  type InputTransactionData,
 } from "@aptos-labs/ts-sdk";
-import { useWallet } from "@aptos-labs/wallet-adapter-react";
+import { useWallet, type InputTransactionData } from "@aptos-labs/wallet-adapter-react";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
@@ -174,26 +174,28 @@ export const ProfileEditor = memo(function ProfileEditor({
       }
 
       const provider = await createDefaultErasureCodingProvider();
+      const accountAddr = AccountAddress.from(String(accountAddress));
       for (const { blobName, blobData } of blobs) {
         const commitments = await generateCommitments(provider, blobData);
         const sdkPayload = ShelbyBlobClient.createRegisterBlobPayload({
-          account: accountAddress,
+          account: accountAddr,
           blobName,
           blobMerkleRoot: commitments.blob_merkle_root,
           numChunksets: expectedTotalChunksets(commitments.raw_data_size),
           expirationMicros,
           blobSize: commitments.raw_data_size,
+          encoding: 0,
         });
-        const patchedPayload: InputEntryFunctionData = {
+        const patchedPayload = {
           ...(sdkPayload as object),
           functionArguments: (
             (sdkPayload as { functionArguments?: unknown[] }).functionArguments ?? []
           ).map((arg: unknown, idx: number) =>
             idx === 6 && (arg === null || arg === undefined) ? "0" : arg
           ),
-        };
+        } as InputEntryFunctionData;
         const tx: InputTransactionData = { data: patchedPayload };
-        const submitted = await signAndSubmit(tx as { data: unknown });
+        const submitted = await signAndSubmit(tx);
         await aptosClient.waitForTransaction({
           transactionHash: submitted.hash,
         });

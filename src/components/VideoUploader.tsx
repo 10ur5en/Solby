@@ -4,7 +4,8 @@ import { Button } from "@/components/ui/button";
 import { useUnifiedWallet } from "@/hooks/useUnifiedWallet";
 import { addStoredVideo, VIDEO_CATEGORIES, type VideoCategory } from "@/types/video";
 import { shelbyClient } from "@/utils/shelbyClient";
-import { Aptos, AptosConfig, Network as AptosNetwork, type InputEntryFunctionData, type InputTransactionData } from "@aptos-labs/ts-sdk";
+import { AccountAddress, Aptos, AptosConfig, Network as AptosNetwork, type InputEntryFunctionData } from "@aptos-labs/ts-sdk";
+import type { InputTransactionData } from "@aptos-labs/wallet-adapter-react";
 import { useWallet } from "@aptos-labs/wallet-adapter-react";
 import {
   createDefaultErasureCodingProvider,
@@ -136,12 +137,13 @@ export const VideoUploader = memo(function VideoUploader({
 
         // 1) Build payload for Aptos wallet using SDK helper
         const sdkPayload = ShelbyBlobClient.createRegisterBlobPayload({
-          account: account.address,
+          account: AccountAddress.from(String(account.address)),
           blobName,
           blobMerkleRoot: commitments.blob_merkle_root,
           numChunksets: expectedTotalChunksets(commitments.raw_data_size),
           expirationMicros,
           blobSize: commitments.raw_data_size,
+          encoding: 0,
         });
 
         // 2) SDK payload'ındaki bug'ı patch et: son argüman null gelirse "0" yap
@@ -173,12 +175,13 @@ export const VideoUploader = memo(function VideoUploader({
 
         // 1) Build payload for Solana flow (uses same Aptos register_blob under the hood)
         const sdkPayload = ShelbyBlobClient.createRegisterBlobPayload({
-          account: storageAddressStr!,
+          account: AccountAddress.from(storageAddressStr!),
           blobName,
           blobMerkleRoot: commitments.blob_merkle_root,
           numChunksets: expectedTotalChunksets(commitments.raw_data_size),
           expirationMicros,
           blobSize: commitments.raw_data_size,
+          encoding: 0,
         });
 
         const patchedPayload: InputEntryFunctionData = {
