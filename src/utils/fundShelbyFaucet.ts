@@ -3,7 +3,7 @@
 import { AccountAddress } from "@aptos-labs/ts-sdk";
 
 const SHELBY_USD_FAUCET =
-  "https://faucet.shelbynet.shelby.xyz/fund?asset=shelbyusd";
+  "https://faucet.testnet.shelby.xyz/fund?asset=shelbyusd";
 const DEFAULT_TXN_TIMEOUT_SEC = 20;
 
 type ShelbyClientWithAptos = {

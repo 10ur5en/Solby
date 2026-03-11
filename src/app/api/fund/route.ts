@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 const SHELBY_USD_FAUCET =
-  "https://faucet.shelbynet.shelby.xyz/fund?asset=shelbyusd";
+  "https://faucet.testnet.shelby.xyz/fund?asset=shelbyusd";
 
 function normalizeAptosAddress(addr: string): string {
   const s = addr.trim().toLowerCase();

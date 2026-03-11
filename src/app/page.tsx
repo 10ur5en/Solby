@@ -4,7 +4,17 @@ import { Header } from "@/components/Header";
 import { VideoCard } from "@/components/VideoCard";
 import { CATEGORY_ICONS, CATEGORY_LABELS } from "@/lib/categories";
 import { fetchProfile, type ProfileData } from "@/types/profile";
-import { getViewCount, getVideosByCategory, VIDEO_CATEGORIES, type VideoCategory } from "@/types/video";
+import {
+  fetchVideosFromShelby,
+  filterAndSortForCategory,
+  getAllStoredVideos,
+  getAllViewCounts,
+  getViewCount,
+  mergeVideoLists,
+  VIDEO_CATEGORIES,
+  type VideoCategory,
+  type VideoEntry,
+} from "@/types/video";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -15,28 +25,74 @@ export default function Home() {
   const searchQuery = searchParams.get("search")?.trim() ?? "";
   const validCategory = VIDEO_CATEGORIES.includes(category) ? category : "trending";
 
-  const [videos, setVideos] = useState(
-    typeof window !== "undefined" ? getVideosByCategory(validCategory) : []
-  );
+  const [videos, setVideos] = useState<VideoEntry[]>([]);
+  const [loading, setLoading] = useState(false);
 
-  const refreshVideos = useCallback(() => {
-    let list = getVideosByCategory(validCategory);
-    if (searchQuery) {
-      const q = searchQuery.toLowerCase();
-      list = list.filter((v) => {
-        const title = v.name.replace(/\.[^/.]+$/, "").toLowerCase();
-        return title.includes(q);
+  const refreshVideos = useCallback(async () => {
+    try {
+      setLoading(true);
+      const listFromShelby = await fetchVideosFromShelby({
+        category: validCategory,
+        search: searchQuery || undefined,
       });
+      // Indexer henüz yeni yüklemeyi göstermeyebilir; bu tarayıcıda yüklenenleri de listeye ekle
+      const localList =
+        typeof window !== "undefined"
+          ? getAllStoredVideos().filter((v) => !v.hidden)
+          : [];
+      const merged = mergeVideoLists(listFromShelby, localList);
+      const viewCounts =
+        typeof window !== "undefined" ? getAllViewCounts() : {};
+      let result = filterAndSortForCategory(
+        merged,
+        validCategory,
+        viewCounts
+      );
+      if (searchQuery) {
+        const q = searchQuery.toLowerCase();
+        result = result.filter((v) =>
+          v.name.toLowerCase().includes(q)
+        );
+      }
+      setVideos(result);
+    } finally {
+      setLoading(false);
     }
-    setVideos(list);
   }, [validCategory, searchQuery]);
 
   useEffect(() => {
-    refreshVideos();
+    void refreshVideos();
   }, [refreshVideos]);
 
+  // Kayıt açıksa mevcut (local) videoları bir kez sunucuya gönder; gizli sekmede de görünsün
   useEffect(() => {
-    const handler = () => refreshVideos();
+    if (typeof window === "undefined") return;
+    try {
+      if (sessionStorage.getItem("shelby-registry-synced")) return;
+      const list = getAllStoredVideos();
+      if (!list.length) return;
+      for (const v of list) {
+        fetch("/api/videos", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            storageAccount: v.storageAccount,
+            name: v.name,
+            url: v.url,
+            uploadedAt: v.uploadedAt,
+          }),
+        }).catch(() => {});
+      }
+      sessionStorage.setItem("shelby-registry-synced", "1");
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  useEffect(() => {
+    const handler = () => {
+      void refreshVideos();
+    };
     window.addEventListener("shelby-upload-complete", handler);
     return () => window.removeEventListener("shelby-upload-complete", handler);
   }, [refreshVideos]);
@@ -92,7 +148,12 @@ export default function Home() {
 
         <main className="min-h-[calc(100vh-3.5rem)] flex-1 md:pl-52">
           <div className="px-4 py-6">
-            {videos.length === 0 ? (
+            {loading && videos.length === 0 ? (
+              <div className="flex flex-col items-center justify-center rounded-xl bg-[#212121] p-16 text-center">
+                <div className="mb-4 h-8 w-8 animate-spin rounded-full border-2 border-white/20 border-t-white" />
+                <p className="mt-2 text-sm text-white/60">Loading videos from Shelby…</p>
+              </div>
+            ) : videos.length === 0 ? (
               <div className="flex flex-col items-center justify-center rounded-xl bg-[#212121] p-16 text-center">
                 <div className="mb-4 flex h-24 w-24 items-center justify-center rounded-full bg-white/5">
                   <svg className="h-12 w-12 text-white/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">

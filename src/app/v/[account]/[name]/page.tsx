@@ -20,8 +20,8 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 const SHELBY_BLOB_BASE =
-  "https://api.shelbynet.shelby.xyz/shelby/v1/blobs";
-const SHELBY_EXPLORER_BASE = "https://explorer.shelby.xyz/shelbynet/account";
+  "https://api.testnet.shelby.xyz/shelby/v1/blobs";
+const SHELBY_EXPLORER_BASE = "https://explorer.shelby.xyz/testnet/account";
 
 export default function WatchPage() {
   const params = useParams();
@@ -99,6 +99,16 @@ export default function WatchPage() {
       storageAccount: decodedAccount,
       uploadedAt: new Date(),
     });
+    fetch("/api/videos", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        storageAccount: decodedAccount,
+        name: decodedName,
+        url: videoUrl,
+        uploadedAt: new Date().toISOString(),
+      }),
+    }).catch(() => {});
     setAddedToGallery(true);
   }, [decodedAccount, decodedName, videoUrl, addedToGallery]);
 

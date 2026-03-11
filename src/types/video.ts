@@ -23,6 +23,9 @@ export interface VideoEntry {
 const STORAGE_KEY = "shelby-player-videos";
 const VIEW_COUNT_KEY = "shelby-player-view-counts";
 
+const SHELBY_BLOB_BASE =
+  "https://api.testnet.shelby.xyz/shelby/v1/blobs";
+
 function videoKey(storageAccount: string, name: string): string {
   return `${storageAccount}\n${name}`;
 }
@@ -140,9 +143,37 @@ export function setVideoHidden(
 
 export function getVideosByCategory(category: VideoCategory | null): VideoEntry[] {
   const all = getAllStoredVideos().filter((v) => !v.hidden);
+  return filterAndSortForCategory(all, category ?? "trending", getAllViewCounts());
+}
+
+/** Indexer + localStorage listesini birleştirir (aynı video varsa indexer öncelikli). */
+export function mergeVideoLists(
+  indexerList: VideoEntry[],
+  localList: VideoEntry[]
+): VideoEntry[] {
+  const byKey = new Map<string, VideoEntry>();
+  for (const v of indexerList) {
+    byKey.set(videoKey(v.storageAccount, v.name), v);
+  }
+  for (const v of localList) {
+    const key = videoKey(v.storageAccount, v.name);
+    if (!byKey.has(key)) byKey.set(key, v);
+  }
+  return Array.from(byKey.values());
+}
+
+/** Liste üzerinde kategori filtrelemesi ve sıralama (trending: izlenme + tarih, diğer: kategori + tarih). */
+export function filterAndSortForCategory(
+  list: VideoEntry[],
+  category: VideoCategory,
+  viewCounts: Record<string, number>
+): VideoEntry[] {
+  const filtered =
+    !category || category === "trending"
+      ? list
+      : list.filter((v) => (v.category || "other") === category);
   if (!category || category === "trending") {
-    const viewCounts = getAllViewCounts();
-    return [...all].sort((a, b) => {
+    return [...filtered].sort((a, b) => {
       const keyA = videoKey(a.storageAccount, a.name);
       const keyB = videoKey(b.storageAccount, b.name);
       const viewsA = viewCounts[keyA] ?? 0;
@@ -151,5 +182,45 @@ export function getVideosByCategory(category: VideoCategory | null): VideoEntry[
       return new Date(b.uploadedAt).getTime() - new Date(a.uploadedAt).getTime();
     });
   }
-  return all.filter((v) => (v.category || "other") === category);
+  return [...filtered].sort(
+    (a, b) =>
+      new Date(b.uploadedAt).getTime() - new Date(a.uploadedAt).getTime()
+  );
+}
+
+/** Tarayıcıdan indexer yerine kendi API route'umuzu kullan (CORS ve testnet/shelbynet fallback için). */
+async function fetchVideosFromApi(options: {
+  search?: string;
+  owner?: string | null;
+  limit?: number;
+}): Promise<VideoEntry[]> {
+  const params = new URLSearchParams();
+  if (options.search) params.set("search", options.search);
+  if (options.owner) params.set("owner", options.owner);
+  params.set("limit", String(options.limit ?? 48));
+  const res = await fetch(`/api/videos?${params}`);
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(err || "Failed to fetch videos");
+  }
+  return res.json() as Promise<VideoEntry[]>;
+}
+
+export async function fetchVideosFromShelby(options: {
+  category?: VideoCategory | null;
+  search?: string;
+  owner?: string | null;
+  limit?: number;
+}): Promise<VideoEntry[]> {
+  const { category, search, owner, limit = 48 } = options;
+
+  if (typeof window === "undefined") return [];
+
+  try {
+    const videos = await fetchVideosFromApi({ search, owner, limit });
+    if (!category || category === "trending") return videos;
+    return videos;
+  } catch {
+    return [];
+  }
 }

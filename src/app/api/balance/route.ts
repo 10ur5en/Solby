@@ -2,13 +2,14 @@ import { NextResponse } from "next/server";
 
 const APT_COIN_TYPE = "0x1::aptos_coin::AptosCoin";
 
-const SHELBYNET_BASES = [
-  "https://api.shelbynet.shelby.xyz/v1",
-  "https://api.shelbynet.aptoslabs.com/v1",
+/** Aptos testnet full node (Shelby Early Access uses Aptos testnet). */
+const APTOS_TESTNET_BASES = [
+  "https://fullnode.testnet.aptoslabs.com/v1",
+  "https://api.testnet.aptoslabs.com/v1",
 ] as const;
 
-/** Shelbynet Indexer GraphQL (Explorer gets balance from here). */
-const SHELBYNET_GRAPHQL = "https://api.shelbynet.shelby.xyz/v1/graphql";
+/** Aptos testnet Indexer GraphQL for APT + ShelbyUSD balances. */
+const APTOS_TESTNET_GRAPHQL = "https://api.testnet.aptoslabs.com/v1/graphql";
 
 const GET_FUNGIBLE_BALANCES = `
   query getCurrentFungibleAssetBalances($where_condition: current_fungible_asset_balances_bool_exp, $offset: Int, $limit: Int) {
@@ -111,14 +112,14 @@ function parseAmount(v: string | number): bigint {
   }
 }
 
-/** Shelbynet Indexer GraphQL returns APT and ShelbyUSD separately. */
+/** Aptos testnet Indexer GraphQL returns APT and ShelbyUSD separately. */
 async function getBalanceFromIndexer(addr: string): Promise<{
   balance: string;
   apt: string;
   shelbyUsd: string;
 } | null> {
   try {
-    const res = await fetch(SHELBYNET_GRAPHQL, {
+    const res = await fetch(APTOS_TESTNET_GRAPHQL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -207,7 +208,7 @@ export async function GET(request: Request) {
       });
     }
 
-    for (const base of SHELBYNET_BASES) {
+    for (const base of APTOS_TESTNET_BASES) {
       const result = await tryBalanceFromBase(base, addr);
       if ("balance" in result && BigInt(result.balance) > 0n) {
         return NextResponse.json({

@@ -1,5 +1,7 @@
 "use client";
 
+import "@/utils/shelbyPatch";
+
 import { CategoryThemeProvider } from "@/components/CategoryThemeProvider";
 import { FundedStorageProvider } from "@/context/FundedStorageContext";
 import { UploadModalProvider } from "@/context/UploadModalContext";

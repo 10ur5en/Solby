@@ -27,18 +27,21 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000) in your browser.
 
+**Sunucuda test:** Ücretsiz Vercel’e deploy adımları için [DEPLOY.md](./DEPLOY.md) dosyasına bakın.
+
 ## Environment variables
 
 | Variable | Description |
 |----------|-------------|
 | `NEXT_PUBLIC_SHELBYNET_API_KEY` | Shelby API key (required) |
+| `NEXT_PUBLIC_APTOS_NETWORK` | Aptos network: unset = testnet (Shelby Early Access), `mainnet` when in production |
 | `NEXT_PUBLIC_SOLANA_RPC` | Solana RPC (optional, default: Devnet) |
 
 ### "Failed to fetch" / loading error
 
 If you get **Failed to fetch** when clicking the upload button:
 
-1. **API key** — Sign in at [Geomi](https://geomi.dev/), create an **API Resource** and select **Shelbynet**. Create the key as **client key** (browser); server key will not work from the browser.
+1. **API key** — Sign in at [Geomi](https://geomi.dev/), create an **API Resource** and select **Testnet** (Shelby Early Access is on Aptos testnet). Create the key as **client key** (browser); server key will not work from the browser.
 2. **Approved URLs** — Add `http://localhost:3000` to **approved URLs** for that key. Otherwise the request will be blocked by CORS.
 3. **.env.local** — Create a `.env.local` file in the project root with:
    ```env

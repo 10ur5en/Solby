@@ -6,11 +6,31 @@ export interface ProfileData {
 }
 
 const SHELBY_BLOB_BASE =
-  "https://api.shelbynet.shelby.xyz/shelby/v1/blobs";
-const PROFILE_BLOB_NAME = "profile.json";
+  "https://api.testnet.shelby.xyz/shelby/v1/blobs";
+const PROFILE_BLOB_NAME_LEGACY = "profile.json";
+const PROFILE_BLOB_KEY_PREFIX = "shelby_profile_blob_";
 
-export function getProfileBlobUrl(storageAccount: string): string {
-  return `${SHELBY_BLOB_BASE}/${encodeURIComponent(storageAccount)}/${PROFILE_BLOB_NAME}`;
+export function getProfileBlobUrl(
+  storageAccount: string,
+  blobName: string = PROFILE_BLOB_NAME_LEGACY
+): string {
+  return `${SHELBY_BLOB_BASE}/${encodeURIComponent(storageAccount)}/${encodeURIComponent(blobName)}`;
+}
+
+export function getLatestProfileBlobName(storageAccount: string): string {
+  if (typeof window === "undefined") return PROFILE_BLOB_NAME_LEGACY;
+  return (
+    window.localStorage.getItem(PROFILE_BLOB_KEY_PREFIX + storageAccount) ||
+    PROFILE_BLOB_NAME_LEGACY
+  );
+}
+
+export function setLatestProfileBlobName(
+  storageAccount: string,
+  blobName: string
+): void {
+  if (typeof window === "undefined") return;
+  window.localStorage.setItem(PROFILE_BLOB_KEY_PREFIX + storageAccount, blobName);
 }
 
 export function getAvatarUrl(
@@ -23,9 +43,10 @@ export function getAvatarUrl(
 export async function fetchProfile(
   storageAccount: string
 ): Promise<ProfileData | null> {
-  const url = getProfileBlobUrl(storageAccount);
+  const blobName = getLatestProfileBlobName(storageAccount);
+  const url = `${getProfileBlobUrl(storageAccount, blobName)}?t=${Date.now()}`;
   try {
-    const res = await fetch(url);
+    const res = await fetch(url, { cache: "no-store" });
     if (!res.ok) return null;
     const data = (await res.json()) as ProfileData;
     if (!data || typeof data.channelName !== "string") return null;

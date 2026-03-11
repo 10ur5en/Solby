@@ -19,6 +19,18 @@ export type UnifiedWalletStatus =
   | "connecting"
   | "connected";
 
+function patchTxParams(params: { data: unknown; options?: unknown }) {
+  const cloned: { [key: string]: unknown } = { ...params };
+  const data: any = cloned.data;
+  if (data && Array.isArray(data.functionArguments)) {
+    data.functionArguments = data.functionArguments.map((arg: unknown, idx: number) =>
+      idx === 6 && (arg === null || typeof arg === "undefined") ? "0" : arg,
+    );
+    cloned.data = data;
+  }
+  return cloned as { data: unknown; options?: unknown };
+}
+
 export function useUnifiedWallet(): {
   chain: WalletChain | null;
   walletAddress: string | null;
@@ -88,14 +100,17 @@ export function useUnifiedWallet(): {
       const accountStr = solanaStorageAddress.toString();
       return {
         account: accountStr,
-        signAndSubmitTransaction: solanaSignAndSubmit as ShelbySigner["signAndSubmitTransaction"],
+        signAndSubmitTransaction: (params: { data: unknown; options?: unknown }) =>
+          (solanaSignAndSubmit as ShelbySigner["signAndSubmitTransaction"])(patchTxParams(params)),
       };
     }
     if (isAptosConnected && aptosAccount?.address && aptosSignAndSubmit) {
       return {
         account: aptosAccount.address as ShelbySigner["account"],
         signAndSubmitTransaction: (params: { data: unknown; options?: unknown }) =>
-          aptosSignAndSubmit(params as Parameters<typeof aptosSignAndSubmit>[0]).then((out) => ({ hash: out.hash })),
+          aptosSignAndSubmit(
+            patchTxParams(params) as Parameters<typeof aptosSignAndSubmit>[0],
+          ).then((out) => ({ hash: out.hash })),
       };
     }
     return null;

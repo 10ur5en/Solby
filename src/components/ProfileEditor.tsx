@@ -2,13 +2,29 @@
 
 import { Button } from "@/components/ui/button";
 import { useUnifiedWallet } from "@/hooks/useUnifiedWallet";
-import { fetchProfile, getAvatarUrl, type ProfileData } from "@/types/profile";
+import {
+  fetchProfile,
+  getAvatarUrl,
+  setLatestProfileBlobName,
+  type ProfileData,
+} from "@/types/profile";
 import { shelbyClient } from "@/utils/shelbyClient";
-import { useUploadBlobs } from "@shelby-protocol/react";
-import { memo, useCallback, useEffect, useRef, useState } from "react";
+import {
+  createDefaultErasureCodingProvider,
+  expectedTotalChunksets,
+  generateCommitments,
+  ShelbyBlobClient,
+} from "@shelby-protocol/sdk/browser";
+import {
+  Aptos,
+  AptosConfig,
+  Network as AptosNetwork,
+  type InputEntryFunctionData,
+  type InputTransactionData,
+} from "@aptos-labs/ts-sdk";
+import { useWallet } from "@aptos-labs/wallet-adapter-react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-
-const PROFILE_BLOB_NAME = "profile.json";
 
 interface ProfileEditorProps {
   storageAccount: string;
@@ -19,10 +35,22 @@ export const ProfileEditor = memo(function ProfileEditor({
   storageAccount,
   onProfileUpdate,
 }: ProfileEditorProps) {
-  const { status, canSign, shelbySigner } = useUnifiedWallet();
-  const { mutateAsync: uploadBlobs, isPending: isUploading } = useUploadBlobs({
-    client: shelbyClient as unknown as Parameters<typeof useUploadBlobs>[0]["client"],
-  });
+  const { status, canSign, shelbySigner, chain } = useUnifiedWallet();
+  const { account, signAndSubmitTransaction } = useWallet();
+  const aptosClient = useMemo(
+    () =>
+      new Aptos(
+        new AptosConfig({
+          network: AptosNetwork.TESTNET,
+          ...(process.env.NEXT_PUBLIC_APTOS_API_KEY && {
+            clientConfig: { API_KEY: process.env.NEXT_PUBLIC_APTOS_API_KEY },
+          }),
+        })
+      ),
+    []
+  );
+
+  const [isUploading, setIsUploading] = useState(false);
 
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [channelName, setChannelName] = useState("");
@@ -90,14 +118,14 @@ export const ProfileEditor = memo(function ProfileEditor({
     }
 
     try {
+      setIsUploading(true);
       const blobs: { blobName: string; blobData: Uint8Array }[] = [];
-
-      // Generate unique name for each new avatar upload
       const timestamp = Date.now();
       const nextAvatarBlobName =
         avatarFile != null
           ? `avatar-${timestamp}.png`
           : profile?.avatarBlobName;
+      const profileBlobName = `profile-${timestamp}.json`;
 
       if (avatarFile) {
         const buf = await avatarFile.arrayBuffer();
@@ -114,20 +142,69 @@ export const ProfileEditor = memo(function ProfileEditor({
         xHandle: xHandleTrimmed,
       };
       const profileJson = JSON.stringify(profileData);
-      blobs.push({
-        blobName: PROFILE_BLOB_NAME,
-        blobData: new TextEncoder().encode(profileJson),
-      });
+      const profileBytes = new TextEncoder().encode(profileJson);
+      blobs.push({ blobName: profileBlobName, blobData: profileBytes });
+      if (!profile) {
+        blobs.push({
+          blobName: "profile.json",
+          blobData: profileBytes,
+        });
+      }
 
       const expirationMicros =
         (Date.now() + 1000 * 60 * 60 * 24 * 365) * 1000;
 
-      await uploadBlobs({
-        signer: shelbySigner as Parameters<typeof uploadBlobs>[0]["signer"],
-        blobs,
-        expirationMicros,
-      });
+      const accountAddress =
+        chain === "aptos" && account?.address
+          ? account.address
+          : storageAccount;
+      const signAndSubmit =
+        chain === "aptos" && signAndSubmitTransaction
+          ? (tx: { data: unknown }) =>
+              signAndSubmitTransaction(
+                tx as Parameters<typeof signAndSubmitTransaction>[0]
+              ).then((r) => ({ hash: r.hash }))
+          : shelbySigner?.signAndSubmitTransaction;
 
+      if (!signAndSubmit || !accountAddress) {
+        toast.error(
+          "Wallet not ready. Connect your wallet and try again."
+        );
+        return;
+      }
+
+      const provider = await createDefaultErasureCodingProvider();
+      for (const { blobName, blobData } of blobs) {
+        const commitments = await generateCommitments(provider, blobData);
+        const sdkPayload = ShelbyBlobClient.createRegisterBlobPayload({
+          account: accountAddress,
+          blobName,
+          blobMerkleRoot: commitments.blob_merkle_root,
+          numChunksets: expectedTotalChunksets(commitments.raw_data_size),
+          expirationMicros,
+          blobSize: commitments.raw_data_size,
+        });
+        const patchedPayload: InputEntryFunctionData = {
+          ...(sdkPayload as object),
+          functionArguments: (
+            (sdkPayload as { functionArguments?: unknown[] }).functionArguments ?? []
+          ).map((arg: unknown, idx: number) =>
+            idx === 6 && (arg === null || arg === undefined) ? "0" : arg
+          ),
+        };
+        const tx: InputTransactionData = { data: patchedPayload };
+        const submitted = await signAndSubmit(tx as { data: unknown });
+        await aptosClient.waitForTransaction({
+          transactionHash: submitted.hash,
+        });
+        await shelbyClient.rpc.putBlob({
+          account: accountAddress,
+          blobName,
+          blobData,
+        });
+      }
+
+      setLatestProfileBlobName(storageAccount, profileBlobName);
       setProfile(profileData);
       setAvatarFile(null);
       toast.success("Profile saved to Shelby network.");
@@ -135,14 +212,19 @@ export const ProfileEditor = memo(function ProfileEditor({
     } catch (error) {
       const msg = error instanceof Error ? error.message : String(error);
       toast.error(msg || "Failed to save profile.");
+    } finally {
+      setIsUploading(false);
     }
   }, [
     shelbySigner,
+    chain,
+    account?.address,
+    signAndSubmitTransaction,
+    storageAccount,
     channelName,
     xHandle,
     avatarFile,
     profile,
-    uploadBlobs,
     onProfileUpdate,
   ]);
 

@@ -18,6 +18,7 @@ const client = createClient({
 
 const queryClient = new QueryClient();
 
+// Shelby Early Access uses Aptos testnet; default to testnet unless mainnet is set
 const aptosNetwork =
   process.env.NEXT_PUBLIC_APTOS_NETWORK === "mainnet"
     ? Network.MAINNET
