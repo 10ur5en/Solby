@@ -1,0 +1,46 @@
+{
+  "name": "shelby-player",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "biome check .",
+    "lint:fix": "biome check --write ."
+  },
+  "dependencies": {
+    "@aptos-labs/ts-sdk": "^5.1.1",
+    "@aptos-labs/wallet-adapter-react": "^6.2.0",
+    "@aptos-labs/wallet-standard": "^0.5.2",
+    "@radix-ui/react-slot": "^1.1.0",
+    "@shelby-protocol/react": "^0.0.5",
+    "@shelby-protocol/sdk": "^0.2.4",
+    "@shelby-protocol/solana-kit": "^0.2.6",
+    "@solana/client": "^1.7.0",
+    "@solana/react-hooks": "^1.4.1",
+    "@solana/sysvars": "^6.2.0",
+    "@tanstack/react-query": "^5.60.0",
+    "@wallet-standard/core": "^1.1.1",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "got": "^14.6.6",
+    "next": "^15.5.11",
+    "react": "^18",
+    "react-dom": "^18",
+    "sonner": "^1.7.0",
+    "tailwind-merge": "^2.5.0"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^1.9.4",
+    "@tailwindcss/postcss": "^4.0.0",
+    "@types/node": "^22",
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
+    "dotenv": "^17.3.1",
+    "tailwindcss": "^4.0.0",
+    "ts-node": "^10.9.2",
+    "tsx": "^4.21.0",
+    "typescript": "^5"
+  }
+}

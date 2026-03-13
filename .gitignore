@@ -1,16 +1,15 @@
 node_modules/
 .next/
 out/
+# Keep env example for docs; never commit real keys
 .env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
+.env.*
+!.env.example
 *.tsbuildinfo
 next-env.d.ts
 .vercel
 .DS_Store
-# Video kaydı (ENABLE_VIDEO_REGISTRY=true kullanılıyorsa)
+# Video registry file (when ENABLE_VIDEO_REGISTRY=true)
 data/
-# Test videoları proje kökünde (uygulama kullanmıyor)
+# Test videos at project root (app does not use these)
 /testvideo.mp4
