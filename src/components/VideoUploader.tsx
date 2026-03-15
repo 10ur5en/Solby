@@ -256,10 +256,20 @@ export const VideoUploader = memo(function VideoUploader({
       setIsUploading(false);
       const msg =
         error instanceof Error ? error.message : String(error);
+      const isUnauthorized =
+        msg.includes("401") ||
+        msg.includes("Unauthorized") ||
+        msg.includes("API key not found") ||
+        (msg.includes("Unauthoriz") && msg.includes("not valid JSON"));
       if (msg.includes("INSUFFICIENT_BALANCE_FOR_TRANSACTION_FEE")) {
         toast.error("Fund your account for transaction fees.");
       } else if (msg.includes("E_INSUFFICIENT_FUNDS")) {
         toast.error("ShelbyUSD required for storage. Fund your account.");
+      } else if (isUnauthorized) {
+        toast.error(
+          "Shelby API rejected the request (401). Set NEXT_PUBLIC_SHELBYNET_API_KEY in Vercel env and add this site's URL to Geomi allowed origins (geomi.dev), then redeploy."
+        );
+        setStatusMessage("Error: API key missing or domain not allowed.");
       } else if (
         msg.includes("multipart") ||
         msg.includes("500") ||

@@ -165,7 +165,17 @@ export const ProfileEditor = memo(function ProfileEditor({
       onProfileUpdate?.(profileData);
     } catch (error) {
       const msg = error instanceof Error ? error.message : String(error);
-      toast.error(msg || "Failed to save profile.");
+      const isUnauthorized =
+        msg.includes("401") ||
+        msg.includes("Unauthorized") ||
+        msg.includes("API key not found");
+      if (isUnauthorized) {
+        toast.error(
+          "Shelby API key missing or invalid. Set NEXT_PUBLIC_SHELBYNET_API_KEY in .env.local (local) or in Vercel Environment Variables (production)."
+        );
+      } else {
+        toast.error(msg || "Failed to save profile.");
+      }
     } finally {
       setIsUploading(false);
     }
