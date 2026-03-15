@@ -261,15 +261,25 @@ export const VideoUploader = memo(function VideoUploader({
         msg.includes("Unauthorized") ||
         msg.includes("API key not found") ||
         (msg.includes("Unauthoriz") && msg.includes("not valid JSON"));
-      if (msg.includes("INSUFFICIENT_BALANCE_FOR_TRANSACTION_FEE")) {
-        toast.error("Fund your account for transaction fees.");
-      } else if (msg.includes("E_INSUFFICIENT_FUNDS")) {
-        toast.error("ShelbyUSD required for storage. Fund your account.");
-      } else if (isUnauthorized) {
+      const isGasError =
+        msg.includes("INSUFFICIENT_BALANCE_FOR_TRANSACTION_FEE") ||
+        (msg.toLowerCase().includes("insufficient") && msg.toLowerCase().includes("transaction") && (msg.toLowerCase().includes("fee") || msg.toLowerCase().includes("gas")));
+      if (isGasError) {
+        const token = chain === "solana" ? "SOL" : "APT";
         toast.error(
-          "Shelby API rejected the request (401). Set NEXT_PUBLIC_SHELBYNET_API_KEY in Vercel env and add this site's URL to Geomi allowed origins (geomi.dev), then redeploy."
+          `Your wallet needs ${token} to pay for transaction fees (gas). Add a small amount of ${token} to the wallet you use to sign.`
         );
-        setStatusMessage("Error: API key missing or domain not allowed.");
+        setStatusMessage(`Add ${token} to your wallet for gas.`);
+      } else if (msg.includes("E_INSUFFICIENT_FUNDS")) {
+        toast.error("ShelbyUSD required for storage. Fund your storage account (Fund button).");
+      } else if (isUnauthorized) {
+        const origin = typeof window !== "undefined" ? window.location.origin : "";
+        toast.error(
+          origin
+            ? `Shelby API rejected (401). In Geomi add this URL to allowed origins: ${origin} — then set NEXT_PUBLIC_SHELBYNET_API_KEY in Vercel and redeploy.`
+            : "Shelby API rejected (401). Set NEXT_PUBLIC_SHELBYNET_API_KEY and add your site URL to Geomi allowed origins (geomi.dev), then redeploy."
+        );
+        setStatusMessage("Error: API key or domain not allowed. Add this site URL to Geomi.");
       } else if (
         msg.includes("multipart") ||
         msg.includes("500") ||
@@ -315,6 +325,7 @@ export const VideoUploader = memo(function VideoUploader({
   const hasApiKey =
     typeof process.env.NEXT_PUBLIC_SHELBYNET_API_KEY === "string" &&
     process.env.NEXT_PUBLIC_SHELBYNET_API_KEY.trim().length > 0;
+  const isProduction = typeof window !== "undefined" && !window.location.origin.includes("localhost");
   const isDisabled = !connected || !fundedStorageAddress || !shelbySigner;
 
   return (
@@ -324,11 +335,18 @@ export const VideoUploader = memo(function VideoUploader({
           Optional: For higher limits and indexer access, add <code className="rounded bg-white/10 px-1">NEXT_PUBLIC_SHELBYNET_API_KEY</code> to your <code className="rounded bg-white/10 px-1">.env.local</code>. The key is issued via Geomi (geomi.dev) and shared between CLI and dApps.
         </div>
       )}
+      {isProduction && chain === "solana" && (
+        <div className="mb-4 rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm text-amber-200">
+          Production + Solana: If upload fails, in Geomi (geomi.dev) add <strong>Allowed origin</strong>: <code className="break-all rounded bg-black/20 px-1">{typeof window !== "undefined" ? window.location.origin : ""}</code> for your API key, then redeploy.
+        </div>
+      )}
       {isDisabled ? (
         <p className="text-sm text-white/60">
           {!connected
             ? "Connect your wallet first."
-            : "Fund your storage account to upload videos."}
+            : chain === "solana" && isProduction && !shelbySigner
+              ? "Solana signer not ready. Add this site's URL to Geomi allowed origins and set NEXT_PUBLIC_SHELBYNET_API_KEY in Vercel, then redeploy."
+              : "Fund your storage account to upload videos."}
         </p>
       ) : (
         <>
