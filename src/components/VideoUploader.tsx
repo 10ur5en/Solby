@@ -262,11 +262,17 @@ export const VideoUploader = memo(function VideoUploader({
         msg.includes("API key not found") ||
         (msg.includes("Unauthoriz") && msg.includes("not valid JSON"));
       if (msg.includes("INSUFFICIENT_BALANCE_FOR_TRANSACTION_FEE")) {
-        const token = chain === "solana" ? "SOL" : "APT";
-        toast.error(
-          `Your wallet needs ${token} to pay for transaction fees (gas). Add a small amount of ${token} to the wallet you use to sign.`
-        );
-        setStatusMessage(`Add ${token} to your wallet for gas.`);
+        if (chain === "solana") {
+          toast.error(
+            "Insufficient funds for transaction. Operations run on Aptos testnet — fund your storage account with APT and ShelbyUSD using the Fund button."
+          );
+          setStatusMessage("Fund storage account (APT + ShelbyUSD) via Fund button.");
+        } else {
+          toast.error(
+            "Your wallet needs APT to pay for transaction fees (gas). Add a small amount of APT to your Aptos wallet."
+          );
+          setStatusMessage("Add APT to your wallet for gas.");
+        }
       } else if (msg.includes("E_INSUFFICIENT_FUNDS")) {
         toast.error("ShelbyUSD required for storage. Fund your storage account (Fund button).");
       } else if (isUnauthorized) {
