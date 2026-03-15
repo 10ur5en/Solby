@@ -261,10 +261,7 @@ export const VideoUploader = memo(function VideoUploader({
         msg.includes("Unauthorized") ||
         msg.includes("API key not found") ||
         (msg.includes("Unauthoriz") && msg.includes("not valid JSON"));
-      const isGasError =
-        msg.includes("INSUFFICIENT_BALANCE_FOR_TRANSACTION_FEE") ||
-        (msg.toLowerCase().includes("insufficient") && msg.toLowerCase().includes("transaction") && (msg.toLowerCase().includes("fee") || msg.toLowerCase().includes("gas")));
-      if (isGasError) {
+      if (msg.includes("INSUFFICIENT_BALANCE_FOR_TRANSACTION_FEE")) {
         const token = chain === "solana" ? "SOL" : "APT";
         toast.error(
           `Your wallet needs ${token} to pay for transaction fees (gas). Add a small amount of ${token} to the wallet you use to sign.`
@@ -325,7 +322,6 @@ export const VideoUploader = memo(function VideoUploader({
   const hasApiKey =
     typeof process.env.NEXT_PUBLIC_SHELBYNET_API_KEY === "string" &&
     process.env.NEXT_PUBLIC_SHELBYNET_API_KEY.trim().length > 0;
-  const isProduction = typeof window !== "undefined" && !window.location.origin.includes("localhost");
   const isDisabled = !connected || !fundedStorageAddress || !shelbySigner;
 
   return (
@@ -335,18 +331,11 @@ export const VideoUploader = memo(function VideoUploader({
           Optional: For higher limits and indexer access, add <code className="rounded bg-white/10 px-1">NEXT_PUBLIC_SHELBYNET_API_KEY</code> to your <code className="rounded bg-white/10 px-1">.env.local</code>. The key is issued via Geomi (geomi.dev) and shared between CLI and dApps.
         </div>
       )}
-      {isProduction && chain === "solana" && (
-        <div className="mb-4 rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm text-amber-200">
-          Production + Solana: If upload fails, in Geomi (geomi.dev) add <strong>Allowed origin</strong>: <code className="break-all rounded bg-black/20 px-1">{typeof window !== "undefined" ? window.location.origin : ""}</code> for your API key, then redeploy.
-        </div>
-      )}
       {isDisabled ? (
         <p className="text-sm text-white/60">
           {!connected
             ? "Connect your wallet first."
-            : chain === "solana" && isProduction && !shelbySigner
-              ? "Solana signer not ready. Add this site's URL to Geomi allowed origins and set NEXT_PUBLIC_SHELBYNET_API_KEY in Vercel, then redeploy."
-              : "Fund your storage account to upload videos."}
+            : "Fund your storage account to upload videos."}
         </p>
       ) : (
         <>
