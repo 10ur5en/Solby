@@ -262,11 +262,14 @@ export const VideoUploader = memo(function VideoUploader({
         msg.includes("API key not found") ||
         (msg.includes("Unauthoriz") && msg.includes("not valid JSON"));
       if (msg.includes("INSUFFICIENT_BALANCE_FOR_TRANSACTION_FEE")) {
+        if (typeof console !== "undefined" && console.error) {
+          console.error("[Solby upload] Chain error:", msg);
+        }
         if (chain === "solana") {
           toast.error(
-            "Insufficient funds for transaction. Operations run on Aptos testnet — fund your storage account with APT and ShelbyUSD using the Fund button."
+            "Chain reports insufficient balance for fee. If you already funded the storage account, try Fund again or add more APT. Check console for details."
           );
-          setStatusMessage("Fund storage account (APT + ShelbyUSD) via Fund button.");
+          setStatusMessage(`Fee error. Full: ${msg.slice(0, 80)}${msg.length > 80 ? "…" : ""}`);
         } else {
           toast.error(
             "Your wallet needs APT to pay for transaction fees (gas). Add a small amount of APT to your Aptos wallet."
